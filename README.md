@@ -1,160 +1,132 @@
-# RNA-seq Analysis Pipeline
+# 🧬 RNA-seq Analysis Pipeline
 
-This repository contains a complete RNA-seq analysis pipeline, including **quality control, trimming, genome indexing, alignment, and gene quantification**.  
-The pipeline is implemented in **Nextflow** (with an optional Bash script) for data processing, and in **R** for downstream exploratory analysis, normalization, differential expression, and functional interpretation.  
+![Nextflow](https://img.shields.io/badge/nextflow-%232C2D72.svg?style=for-the-badge&logo=nextflow&logoColor=white)
+![R](https://img.shields.io/badge/r-%23276DC3.svg?style=for-the-badge&logo=r&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Singularity](https://img.shields.io/badge/singularity-%2313264F.svg?style=for-the-badge&logo=singularity&logoColor=white)
+![Bash](https://img.shields.io/badge/bash-%234EAA25.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 
-The workflow supports execution with **local HPC modules** and optionally uses **Singularity or Docker containers** for reproducibility.
+This repository contains a complete **RNA-seq analysis pipeline**, covering everything from raw data quality control to advanced functional interpretation.
 
+The pipeline is implemented in **Nextflow** (with an optional Bash fallback) for high-performance data processing, and **R** for downstream exploratory analysis, normalization, differential expression, and functional enrichment. It is designed for **reproducibility** using Docker or Singularity containers.
 
-## Features
+## 📋 Features
 
-- **Processing pipeline**:
-  - Reads trimming with **fastp**
-  - Alignment using **STAR**
-  - Gene quantification with **featureCounts**
-  - Optional reuse of existing STAR genome indexes
-- **Analysis pipeline in R**:
-  - Quality control and exploratory analysis
-  - Normalization and batch-effect correction
-  - Differential expression analysis
-  - Functional enrichment: **ORA & GSEA**
-  - Co-expression analysis with **lncRNAs**
-  - ORF prediction and pathway integration
-  - Automated reporting in RMarkdown
-- **Reproducibility**:
-  - Runs on HPC with modules or containers (Singularity/Docker)
-  - Predefined folder structure for input and output
+### 🔹 Processing Pipeline (Nextflow/Bash)
+* **Trimming & QC:** Automated reads trimming using **fastp**.
+* **Alignment:** High-speed alignment using **STAR**.
+* **Quantification:** Gene counting with **featureCounts**.
+* **Optimization:** Automatic reuse of existing STAR genome indexes to save time.
 
+### 🔹 Analysis Pipeline (R)
+* **Exploratory Analysis:** Quality control, PCA, and hierarchal clustering.
+* **Normalization:** Batch-effect correction and variance stabilization.
+* **Differential Expression:** Robust identification of DE genes.
+* **Functional Enrichment:** ORA (Over-Representation Analysis) & GSEA (Gene Set Enrichment Analysis).
+* **LncRNA Analysis:** Co-expression networks and ORF prediction.
+* **Reporting:** Automated generation of an interactive **RMarkdown** report.
 
-## Repository Structure
+## 🔄 Workflow Overview
 
+```mermaid
+flowchart TD
+    subgraph Preprocessing ["Pre-processing (Nextflow/Bash)"]
+        direction TB
+        A[FASTQ files] --> B[fastp: QC & Trimming]
+        B --> C[STAR: Alignment]
+        C --> D[featureCounts: Quantification]
+        D --> E([gene_counts.txt])
+    end
+    subgraph Analysis ["Downstream Analysis (R scripts)"]
+        direction TB
+        E --> F[Data Loading & Filtering]
+        F --> G[QC & Normalization]
+        G --> H[Batch Effect Correction]
+        H --> I[Differential Expression]
+        I --> J["Functional Enrichment <br/> (ORA & GSEA)"]
+        I --> K["LncRNA Co-expression & <br/> ORF Prediction"]
+        J & K --> L[Final HTML Report]
+    end
 ```
+
+## 📂 Repository Structure
+
+```text
 rnaseq-pipeline/
-├── Dockerfile                  # Container definition (fastp, STAR, featureCounts, Nextflow, R/renv)
-├── README.md                   # Project documentation
-├── nextflow.config             # Nextflow configuration (modules + fallback containers)
-├── main.nf                     # Nextflow workflow implementation
-├── run_pipeline.sh             # Optional Bash pipeline
-├── samplesheet.csv             # Example input samplesheet
-├── genome/                     # Reference genome FASTA + annotation
+├── Dockerfile                   # Container definition (fastp, STAR, featureCounts, Nextflow, R/renv)
+├── nextflow.config              # Nextflow configuration (modules + fallback containers)
+├── main.nf                      # Nextflow workflow implementation
+├── run_pipeline.sh              # Optional Bash pipeline
+├── samplesheet.csv              # Example input samplesheet
+├── genome/                      # Reference genome FASTA + annotation
 │   ├── GRCh38.primary_assembly.genome.fa
 │   └── gencode.v48.primary_assembly.annotation.gtf
-├── genome_index/               # STAR genome index (generated/reused)
-├── fastq/                      # Raw FASTQ files
-├── fastp_reports/              # fastp QC reports (.html, .json)
-├── output/                     # Outputs from the processing pipeline
-│   ├── trimmed/                # Trimmed FASTQ files
-│   ├── aligned/                # BAM files from STAR
-│   └── counts/                 # Gene counts (featureCounts)
-├── results/                    # Downstream R analysis results
-└── scripts/                    # R analysis scripts
-├── 00_run_all_analysis.R
-├── 01_load_filter_data.R
-├── 02_exploratory_qc_analysis.R
-├── 03_normalize_transform.R
-├── 04_exploratory_plots.R
-├── 05_correct_batch_effect.R
-├── 06_differential_expression.R
-├── 07_ORA.R
-├── 08_GSEA.R
-├── 09_coexp_lncRNA_groups.R
-├── 10_consolidate_coexp_results.R
-├── 11_predict_lncRNA_ORFs.R
-├── 12_integrate_orf_pathways.R
-├── 13_prioritize_lncRNA_candidates.R
-├── 14_render_report.R
-└── rna_seq_report.Rmd
+├── genome_index/                # STAR genome index (generated/reused)
+├── fastq/                       # Raw FASTQ files
+├── fastp_reports/               # fastp QC reports (.html, .json)
+├── output/                      # Outputs from the processing pipeline
+│   ├── trimmed/                 # Trimmed FASTQ files
+│   ├── aligned/                 # BAM files from STAR
+│   └── counts/                  # Gene counts (featureCounts)
+├── results/                     # Downstream R analysis results
+└── scripts/                     # R analysis scripts
+    ├── 00_run_all_analysis.R    # Master script
+    ├── 01_load_filter_data.R
+    ├── ... (QC, Normalization, DE)
+    ├── 14_render_report.R
+    └── rna_seq_report.Rmd       # RMarkdown template
 ```
 
+## 🚀 Usage
 
-## Usage
-
-### 1. Build Docker image
+### 1. Build Docker Image
+Ensure you have Docker installed and build the image:
 
 ```bash
-docker build -t rnaseq_pipeline:latest
+docker build -t rnaseq_pipeline:latest .
 ```
-On HPC systems without Docker, Singularity images will be used automatically if configured in nextflow.config.
+> **Note:** On HPC systems without Docker, **Singularity** images will be used automatically if configured in `nextflow.config`.
 
+### 2. Run Pipeline (Processing)
 
-### 2. Run Bash pipeline (stable option)
+You can choose between the **Bash** script (stable) or **Nextflow** (beta).
 
+**Option A: Bash Pipeline**
 ```bash
 docker run --rm -v /path/to/project:/data rnaseq_pipeline:latest \
            /bin/bash /data/run_pipeline.sh
 ```
 
-### 3. Run Nextflow pipeline (beta)
-
+**Option B: Nextflow Pipeline**
 ```bash
+# Local execution
 nextflow run main.nf -c nextflow.config
-```
 
-Or with Docker:
-
-```bash
+# With Docker
 docker run --rm -v /path/to/project:/data rnaseq_pipeline:latest \
            /opt/nextflow/nextflow run /data/main.nf -c /data/nextflow.config
 ```
 
+### 3. Run Downstream Analysis (R)
 
-### 4. Run downstream R analysis
-
-Once the gene_counts.txt file is generated (from featureCounts), place it in the project root directory. Then run:
+Once `gene_counts.txt` is generated (from the previous step), place it in the project root directory and execute the master R script:
 
 ```bash
 Rscript scripts/00_run_all_analysis.R
 ```
 
-This will sequentially execute all scripts in /scripts and generate results in /results, plus the final report rna_seq_report.html.
+This will sequentially execute all scripts in `/scripts`, generating tables and plots in `/results`, and producing the final **`rna_seq_report.html`**.
 
-## Workflow Overview
+## ⚙️ Configuration
 
-```mermaid
-flowchart TD
+* **Nextflow:** Adjust parameters in `nextflow.config`.
+* **Bash:** Adjust parameters at the top of `run_pipeline.sh`.
+* **R Dependencies:** Managed via **renv** (lockfile included).
 
-    subgraph Preprocessing["Pre-processing (Nextflow/Bash)"]
-        A[FASTQ files] --> B[fastp : quality filtering & adapter trimming]
-        B --> C[STAR : genome indexing & alignment]
-        C --> D[featureCounts : generate raw gene counts]
-        D --> E[gene_counts.txt]
-    end
+## 📝 Notes
 
-    subgraph Analysis["Downstream Analysis (R scripts)"]
-        E --> F[01_load_filter_data.R : import count matrix, filter low-expressed genes]
-        F --> G[02_exploratory_qc_analysis.R : assess library size, mapping rates, sample QC]
-        G --> H[03_normalize_transform.R : apply normalization & variance-stabilizing transformations]
-        H --> I[04_exploratory_plots.R : visualize sample clustering - PCA, heatmaps]
-        I --> J[05_correct_batch_effect.R : adjust for technical covariates/batch effects]
-        J --> K[06_differential_expression.R : identify differentially expressed genes]
-        K --> L[07_ORA.R : test for enriched functional categories]
-        K --> M[08_GSEA.R : run gene set enrichment with ranked lists]
-        K --> N[09_coexp_lncRNA_groups.R : build lncRNA co-expression modules]
-        N --> O[10_consolidate_coexp_results.R : summarize and merge module outputs]
-        O --> P[11_predict_lncRNA_ORFs.R : detect potential coding ORFs within lncRNAs]
-        P --> Q[12_integrate_orf_pathways.R : link ORFs to pathways & functional annotations]
-        Q --> R[13_prioritize_lncRNA_candidates.R : rank lncRNAs by evidence & functional relevance]
-        R --> S[14_render_report.R : compile results into final report]
-        S --> T[rna_seq_report.html : interactive summary]
-    end
-```
+* **Index Reuse:** Existing STAR genome indexes are automatically detected and reused to save computational time.
+* **HPC Compatibility:** The pipeline is designed to work with local HPC modules or Containers (Singularity/Docker) for maximum flexibility.
 
-
-## Configuration
-
-- Nextflow parameters: nextflow.config
-- Bash pipeline parameters: at the top of run_pipeline.sh
-- R dependencies: managed with renv (renv.lock included in the repo)
-
-⸻
-
-## Notes
-
-- Existing STAR genome indexes are automatically reused if detected.
-- Containers ensure reproducibility, but the pipeline works with HPC modules as well.
-- The R pipeline produces:
-- QC plots, PCA, clustering
-- Differential expression tables
-- ORA/GSEA enrichment results
-- Co-expression networks and ORF predictions
-- A final RNA-seq analysis report (rna_seq_report.html)
+---
+&copy; 2025 Santiago T. Ariza
